@@ -1,10 +1,15 @@
 import React, { useRef, useState } from "react";
 import Header from "./Header";
 import { checkValidData } from "../utilits/validate";
-
+import { auth } from "../utilits/fireBase";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
 const Login = () => {
   const [isSignInForm, SetSignInForm] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
+
   const handleForm = () => {
     SetSignInForm(!isSignInForm);
   };
@@ -13,14 +18,55 @@ const Login = () => {
   const password = useRef(null);
 
   const onFormSubmit = () => {
-    const errorMessage = checkValidData(email.current.value,password.current.value)
+    const errorMessage = checkValidData(
+      email.current.value,
+      password.current.value
+    );
     setErrorMessage(errorMessage);
+    if (errorMessage) return;
+    console.log('returned')
+    if (!isSignInForm) {
+      //Sign Up Logic
+
+      createUserWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value
+      )
+        .then((userCredential) => {
+          // Signed up
+          const user = userCredential.user;
+          console.log(user);
+          // ...
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          setErrorMessage(errorCode + "-" + errorMessage);
+          // ..
+        });
+    } else {
+      signInWithEmailAndPassword(auth, email.current.value,
+        password.current.value)
+        .then((userCredential) => {
+          // Signed in
+          const user = userCredential.user;
+          console.log(user);
+          // ...
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          setErrorMessage(errorCode + "-" + errorMessage);
+        });
+    }
   };
+
   return (
-    <div>
+    <div className="position-absolute">
       <Header />
       <img
-        className="position-relative w-100 z-n1"
+        className="w-100 z-n1"
         src="https://assets.nflxext.com/ffe/siteui/vlv3/fb5cb900-0cb6-4728-beb5-579b9af98fdd/web/IN-en-20250127-TRIFECTA-perspective_cf66f5a3-d894-4185-9106-5f45502fc387_large.jpg"
         alt="background"
       />
@@ -49,9 +95,7 @@ const Login = () => {
           placeholder="password"
           className="p-2 m-2 rounded"
         />
-        <p className="text-light fw-bold p-2 m-2 fs-6">
-            {errorMessage}
-        </p>
+        <p className="text-light fw-bold p-2 m-2 fs-6">{errorMessage}</p>
         <button
           onClick={onFormSubmit}
           type="button"
